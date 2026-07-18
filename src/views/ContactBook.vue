@@ -3,6 +3,22 @@
     <div class="col-md-10">
       <InputSearch v-model="searchText" />
     </div>
+    <div class="mt-3">
+      <h5>Lọc theo sở thích</h5>
+      <div
+        v-for="interest in allInterests"
+        :key="interest"
+        class="form-check form-check-inline"
+      >
+        <input
+          class="form-check-input"
+          type="checkbox"
+          :value="interest"
+          v-model="selectedInterests"
+        />
+        <label class="form-check-label">{{ interest }}</label>
+      </div>
+    </div>
     <div class="mt-3 col-md-6">
       <h4>
         Danh bạ
@@ -65,6 +81,7 @@ export default {
       contacts: [],
       activeIndex: -1,
       searchText: "",
+      selectedInterests: [], // thêm mảng lọc
     };
   },
   watch: {
@@ -79,11 +96,35 @@ export default {
         return [name, email, address, phone].join("");
       });
     },
+    // Lấy danh sách các sở thích có trong tất cả contact
+    allInterests() {
+      const set = new Set();
+      this.contacts.forEach((c) => {
+        if (c.interests && Array.isArray(c.interests)) {
+          c.interests.forEach((i) => set.add(i));
+        }
+      });
+      return Array.from(set);
+    },
     filteredContacts() {
-      if (!this.searchText) return this.contacts;
-      return this.contacts.filter((_contact, index) =>
-        this.contactStrings[index].includes(this.searchText),
-      );
+      let contacts = this.contacts;
+      // Lọc theo từ khóa
+      if (this.searchText) {
+        contacts = contacts.filter((_contact, index) =>
+          this.contactStrings[index].includes(this.searchText),
+        );
+      }
+      // Lọc theo sở thích (nếu có chọn)
+      if (this.selectedInterests.length > 0) {
+        contacts = contacts.filter((contact) => {
+          if (!contact.interests || !Array.isArray(contact.interests))
+            return false;
+          return this.selectedInterests.some((interest) =>
+            contact.interests.includes(interest),
+          );
+        });
+      }
+      return contacts;
     },
     activeContact() {
       if (this.activeIndex < 0) return null;
@@ -104,6 +145,7 @@ export default {
     refreshList() {
       this.retrieveContacts();
       this.activeIndex = -1;
+      this.selectedInterests = []; // reset lọc
     },
     async removeAllContacts() {
       if (confirm("Bạn muốn xóa tất cả Liên hệ?")) {

@@ -2,56 +2,44 @@
   <Form @submit="submitContact" :validation-schema="contactFormSchema">
     <div class="form-group">
       <label for="name">Tên</label>
-
       <Field
         name="name"
         type="text"
         class="form-control"
         v-model="contactLocal.name"
       />
-
       <ErrorMessage name="name" class="error-feedback" />
     </div>
-
     <div class="form-group">
       <label for="email">E-mail</label>
-
       <Field
         name="email"
         type="email"
         class="form-control"
         v-model="contactLocal.email"
       />
-
       <ErrorMessage name="email" class="error-feedback" />
     </div>
-
     <div class="form-group">
       <label for="address">Địa chỉ</label>
-
       <Field
         name="address"
         type="text"
         class="form-control"
         v-model="contactLocal.address"
       />
-
       <ErrorMessage name="address" class="error-feedback" />
     </div>
-
     <div class="form-group">
       <label for="phone">Điện thoại</label>
-
       <Field
         name="phone"
         type="tel"
         class="form-control"
         v-model="contactLocal.phone"
       />
-
       <ErrorMessage name="phone" class="error-feedback" />
     </div>
-
     <div class="form-group form-check">
       <input
         name="favorite"
@@ -59,15 +47,21 @@
         class="form-check-input"
         v-model="contactLocal.favorite"
       />
-
       <label for="favorite" class="form-check-label">
         <strong>Liên hệ yêu thích</strong>
       </label>
     </div>
-
+    <!-- Thêm trường sở thích -->
+    <div class="form-group">
+      <label for="interests">Sở thích (mỗi dòng một)</label>
+      <textarea
+        class="form-control"
+        id="interests"
+        v-model="interestsText"
+      ></textarea>
+    </div>
     <div class="form-group">
       <button class="btn btn-primary">Lưu</button>
-
       <button
         v-if="contactLocal._id"
         type="button"
@@ -76,23 +70,19 @@
       >
         Xóa
       </button>
-
       <button type="button" class="ml-2 btn btn-danger" @click="Cancel">
         Thoát
       </button>
     </div>
   </Form>
 </template>
+
 <script>
 import * as yup from "yup";
 import { Form, Field, ErrorMessage } from "vee-validate";
 
 export default {
-  components: {
-    Form,
-    Field,
-    ErrorMessage,
-  },
+  components: { Form, Field, ErrorMessage },
   emits: ["submit:contact", "delete:contact"],
   props: {
     contact: { type: Object, required: true },
@@ -120,30 +110,39 @@ export default {
     return {
       contactLocal: this.contact,
       contactFormSchema,
+      interestsText: this.contact.interests
+        ? this.contact.interests.join("\n")
+        : "",
     };
   },
   methods: {
     submitContact() {
-      console.log("Submit");
-      this.$emit("submit:contact", this.contactLocal);
+      const contactData = { ...this.contactLocal };
+      // Chuyển textarea thành mảng
+      if (this.interestsText) {
+        contactData.interests = this.interestsText
+          .split("\n")
+          .map((s) => s.trim())
+          .filter((s) => s);
+      } else {
+        contactData.interests = [];
+      }
+      this.$emit("submit:contact", contactData);
     },
     deleteContact() {
-      this.$emit("delete:contact", this.contactLocal.id);
+      this.$emit("delete:contact", this.contactLocal._id);
     },
     Cancel() {
       const reply = window.confirm(
         "You have unsaved changes! Do you want to leave?",
       );
-
-      if (!reply) {
-        return;
-      }
-
+      if (!reply) return;
       this.$router.push({ name: "contactbook" });
     },
   },
 };
 </script>
+
 <style scoped>
 @import "@/assets/form.css";
 </style>

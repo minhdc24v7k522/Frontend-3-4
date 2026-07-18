@@ -1,4 +1,5 @@
 import axios from "axios";
+import authService from "./auth.service";
 
 const commonConfig = {
   headers: {
@@ -8,8 +9,18 @@ const commonConfig = {
 };
 
 export default (baseURL) => {
-  return axios.create({
+  const instance = axios.create({
     baseURL,
     ...commonConfig,
   });
+
+  instance.interceptors.request.use((config) => {
+    const token = authService.getToken();
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  });
+
+  return instance;
 };
